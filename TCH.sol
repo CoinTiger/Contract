@@ -2,6 +2,8 @@ pragma solidity ^0.4.18;
 
 contract Ownable {
   address public owner;
+  
+  
 
 
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
@@ -24,6 +26,8 @@ contract Ownable {
     OwnershipTransferred(owner, newOwner);
     owner = newOwner;
   }
+  
+  
 
 }
 
@@ -57,6 +61,7 @@ contract BasicToken is ERC20Basic, Ownable {
         require(_to != address(0));
         require(_value <= balances[msg.sender]);
 
+        // SafeMath.sub will throw if there is not enough balance.
         balances[msg.sender] = balances[msg.sender].sub(_value);
         balances[_to] = balances[_to].add(_value);
         Transfer(msg.sender, _to, _value);
@@ -67,6 +72,9 @@ contract BasicToken is ERC20Basic, Ownable {
     function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
     }
+    
+    
+    
 }
 
 
@@ -84,7 +92,9 @@ library SafeMath {
   }
 
   function div(uint256 a, uint256 b) internal pure returns (uint256) {
+    
     uint256 c = a / b;
+    
     return c;
   }
 
@@ -105,6 +115,7 @@ contract ERC20 is ERC20Basic {
   function transferFrom(address from, address to, uint256 value) public returns (bool);
   function approve(address spender, uint256 value) public returns (bool);
   event Approval(address indexed owner, address indexed spender, uint256 value);
+  
 }
 
 
@@ -205,6 +216,7 @@ contract MintableToken is StandardToken {
 contract CappedToken is MintableToken {
 
     uint256 public cap;
+    
 
     function CappedToken(uint256 _cap) public {
         require(_cap > 0);
@@ -217,28 +229,55 @@ contract CappedToken is MintableToken {
 
         return super.mint(_to, _amount);
     }
+    
+    
 
 }
 
 
 contract ParameterizedToken is CappedToken {
+    
+    event  Burn(address indexed from, uint256 value);
+    
     string public name;
 
     string public symbol;
 
     uint256 public decimals;
+    
+    
+    
+    
 
     function ParameterizedToken(string _name, string _symbol, uint256 _decimals, uint256 _capIntPart) public CappedToken(_capIntPart * 10 ** _decimals) {
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
     }
+    
+    function burn(uint256 _value) returns (bool success) {
+        if (balances[msg.sender] < _value) throw;            
+		if (_value <= 0) throw; 
+		//update blances and  totalSupply and cap 
+        balances[msg.sender] = balances[msg.sender].sub(_value);  
+        totalSupply = SafeMath.sub(totalSupply,_value);    
+        cap = SafeMath.sub(cap,_value); 
+        Burn(msg.sender, _value);
+        return true;
+    }
+    
+    
+    
 
 }
 
-contract TigerCashToken is ParameterizedToken {
+contract TigerCash is ParameterizedToken {
 
-    function TigerCashToken() public ParameterizedToken("TigerCash", "TCH", 18, 1050000000) {
+    function TigerCash() public ParameterizedToken("TigerCash", "TCH", 18, 1050000000) {
     }
-
+    
+    
+    
+    
+    
 }
